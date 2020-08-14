@@ -8,7 +8,10 @@ module.exports ={
         return new Promise((resolve, reject) => {
                 pool.query(sql, params, (err, result) => {
                     
-                    if(err) return reject(err)
+                    if(err){
+                        // console.log('error is:', err);
+                        return reject(err)
+                    }
 
                     resolve(result)
                 })
@@ -51,14 +54,35 @@ module.exports ={
         return bcrypt.compareSync(password, hashPassword); 
     },
     assignToken: (data ={}, secretKey = 'doubleinvestisacapm') => {
-        return jwt.sign(data, secretKey, { algorithm: 'RS256'});
+        return jwt.sign(data, secretKey);
     },
     verifyToken: (token, secretKey = 'doubleinvestisacapm') => {
         return new Promise((resolve, reject) => {
-            jwt.verify(token, secretKey, { algorithms: ['RS256'] }, function (err, payload) {
+            jwt.verify(token, secretKey, function (err, payload) {
                 if(err) return reject(err)
                 resolve(payload)
              });
         })
-    }
+    },
+    validateUserLoginParams: (req, res, next) => {
+        const userLoginSchema = joi.object({
+            password: joi.string().required(),
+            userName: joi.string().required()
+        });
+        try{
+            const {error} = userLoginSchema.validate(req.body);
+    
+            if(error){
+                console.error(req.body);
+                console.error(error);
+                return res.status(400).send(error);
+            }
+            
+                
+            
+            return next();
+        }catch(error){
+            return res.status(500).send(error);
+        }
+    },
 }
